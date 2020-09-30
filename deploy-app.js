@@ -1,21 +1,26 @@
 const execSync = require("child_process").execSync;
 const args = require("yargs").parse();
-
+// const Constants = require("./celsius-app-creds/production/constants").default
 const ENV = args.env.toUpperCase();
 
-execSync(`yarn set:env --env=${ENV}`, { encoding: "utf-8" });
+const codePushChannels = {
+  BETA: "Beta",
+  BETA_STORYBOOK: "Beta-Storybook",
+  // PRODUCTION: Constants.CLIENT_VERSION,
+};
 
-// output.stdout.on('data', (data) => {
-//   // eslint-disable-next-line no-console
-//   console.log(`stdout: ${data}`);
-// });
+execSync(`yarn set:env --env=${ENV}`, { encoding: "utf-8", stdio: "inherit" });
 
-// output.stderr.on('data', (data) => {
-//   // eslint-disable-next-line no-console
-//   console.error(`stderr: ${data}`);
-// });
+// eslint-disable-next-line no-console
+console.log(`Starting codepush to ${codePushChannels[ENV]} iOS channel`);
+execSync(
+  `appcenter codepush release-react -a celsius-network/celsius -d ${codePushChannels[ENV]}`,
+  { encoding: "utf-8", stdio: "inherit" }
+);
 
-// output.on('close', (code) => {
-//   // eslint-disable-next-line no-console
-//   console.log(`child process exited with code ${code}`);
-// });
+// eslint-disable-next-line no-console
+console.log(`Starting codepush to ${codePushChannels[ENV]} Android channel`);
+execSync(
+  `appcenter codepush release-react -a celsius-network/celsius-1 -d ${codePushChannels[ENV]}`,
+  { encoding: "utf-8", stdio: "inherit" }
+);
