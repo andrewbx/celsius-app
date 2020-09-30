@@ -12,11 +12,7 @@
     "android": "react-native run-android",
     "creds:init": "git clone git@github.com:CelsiusNetwork/celsius-app-creds.git",
     "creds:update": "cd celsius-app-creds && git pull",
-    "set:env": "node set-env",
-    "set:env:staging": "yarn creds:update && CONFIG=STAGING yarn set:env",
-    "set:env:production": "yarn creds:update && CONFIG=PRODUCTION yarn set:env",
-    "set:env:reskinning": "yarn creds:update && CONFIG=RESKINNING yarn set:env",
-    "set:env:beta": "yarn creds:update && CONFIG=BETA yarn set:env",
+    "set:env": "yarn creds:update && node set-env",
     "set:version": "yarn plop version",
     "lint": "eslint app *.js",
     "plop": "plop",
@@ -148,6 +144,7 @@
     "pretty-quick": "^2.0.1",
     "react-dom": "^16.11.0",
     "react-test-renderer": "^16.13.1",
-    "remote-redux-devtools": "^0.5.16"
+    "remote-redux-devtools": "^0.5.16",
+    "yargs": "^16.0.3"
   }
 }

@@ -1,18 +1,16 @@
 // copies app.json from celsius-app-creds repo
-
 const fs = require("fs");
 const path = require("path");
+const args = require("yargs").parse();
 
-const { CONFIG, DIRECTORY_PATH } = process.env;
-
+const { DIRECTORY_PATH } = process.env;
+const CONFIG = args.env.toUpperCase() || process.env.CONFIG;
 const DEFAULT_CREDS_DIR = "./celsius-app-creds";
 
 const ALL_CONFIGS = {
-  // DEV: 'DEV',
-  STAGING: "STAGING",
   PRODUCTION: "PRODUCTION",
-  RESKINNING: "RESKINNING",
   BETA: "BETA",
+  BETA_STORYBOOK: "BETA_STORYBOOK",
 };
 
 const ENV_FILES = {
@@ -78,39 +76,22 @@ function getDestination(fileKey) {
 }
 
 function copyFileFromCelsiusCreds(fileKey) {
-  let src;
   const pathToFile = ENV_FILES[fileKey];
   const dest = getDestination(fileKey);
   const directoryPath = DIRECTORY_PATH || DEFAULT_CREDS_DIR;
+  const credsFolder = CONFIG.toLowerCase().replace("_", "-");
 
-  switch (CONFIG) {
-    case ALL_CONFIGS.PRODUCTION:
-      src = path.resolve(
-        __dirname,
-        `${directoryPath}/production/${pathToFile}`
-      );
-      break;
+  let src = path.resolve(
+    __dirname,
+    `${directoryPath}/${credsFolder}/${pathToFile}`
+  );
 
-    case ALL_CONFIGS.RESKINNING:
-      src = path.resolve(
-        __dirname,
-        `${directoryPath}/reskinning/${pathToFile}`
-      );
-      break;
-
-    case ALL_CONFIGS.BETA:
-      src = path.resolve(
-        __dirname,
-        `${directoryPath}/beta/${pathToFile}`
-      );
-      break;
-
-    case ALL_CONFIGS.DEV:
-    case ALL_CONFIGS.STAGING:
-    default:
-      src = path.resolve(__dirname, `${directoryPath}/staging/${pathToFile}`);
+  // if secondary BETA file doesn't exist fall back to default BETA file
+  if (CONFIG.includes("BETA") && !fs.existsSync(src)) {
+    src = path.resolve(__dirname, `${directoryPath}/beta/${pathToFile}`);
   }
 
+  // if file doesn't exist return false
   if (!fs.existsSync(src)) {
     // eslint-disable-next-line no-console
     console.log(`${src} doesn't exist`);
