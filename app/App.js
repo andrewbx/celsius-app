@@ -19,11 +19,10 @@ import branchUtil from "./utils/branch-util";
 import { disableAccessibilityFontScaling } from "./utils/styles-util";
 import { getSecureStoreKey } from "./utils/expo-storage";
 import Constants from "../constants";
-import { STORYBOOK } from "../dev-settings";
 import StoryBook from "./components/screens/Storybook/Storybook";
 import { SCREENS } from "./constants/SCREENS";
 
-const { SECURITY_STORAGE_AUTH_KEY } = Constants;
+const { SECURITY_STORAGE_AUTH_KEY, STORYBOOK } = Constants;
 
 // eslint-disable-next-line no-console
 console.disableYellowBox = true;

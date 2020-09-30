@@ -21,8 +21,10 @@ import Icon from "../../atoms/Icon/Icon";
 import Loader from "../../atoms/Loader/Loader";
 import fromatter from "../../../utils/formatter";
 import { COLOR_KEYS } from "../../../constants/COLORS";
-import { STORYBOOK } from "../../../../dev-settings.json";
 import { SCREENS } from "../../../constants/SCREENS";
+import Constants from "../../../../constants";
+
+const { STORYBOOK } = Constants;
 
 @connect(
   state => ({
