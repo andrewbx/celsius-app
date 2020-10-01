@@ -43,6 +43,9 @@ class App extends Component {
   async componentDidMount() {
     // Hide Splashscreen immediately when in STORYBOOK mode
     if (STORYBOOK) {
+      const updateInProgress = await appUtil.updateCelsiusApp();
+      if (updateInProgress) return;
+
       SplashScreen.hide();
       return;
     }
