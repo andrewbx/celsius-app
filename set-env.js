@@ -31,8 +31,7 @@ const ENV_FILES = {
 
 let env = process.argv.find(a => a.includes("env="));
 env = env && env.split("=")[1];
-env = env || ALL_CONFIGS.BETA;
-const CONFIG = env.toUpperCase() || process.env.CONFIG;
+const CONFIG = env.toUpperCase() || process.env.CONFIG || ALL_CONFIGS.BETA;
 const DEFAULT_CREDS_DIR = "./celsius-app-creds";
 
 if (Object.keys(ALL_CONFIGS).indexOf(CONFIG) !== -1) {
