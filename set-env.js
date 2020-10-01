@@ -1,11 +1,8 @@
 // copies app.json from celsius-app-creds repo
 const fs = require("fs");
 const path = require("path");
-const args = require("./node_modules/yargs").parse();
 
 const { DIRECTORY_PATH } = process.env;
-const CONFIG = args.env.toUpperCase() || process.env.CONFIG;
-const DEFAULT_CREDS_DIR = "./celsius-app-creds";
 
 const ALL_CONFIGS = {
   PRODUCTION: "PRODUCTION",
@@ -31,6 +28,12 @@ const ENV_FILES = {
   GOOGLE_SERVICES_FALLBACK: "google-services.json",
   GOOGLE_INFO_PLIST_FALLBACK: "GoogleService-Info.plist",
 };
+
+let env = process.argv.find(a => a.includes("env="));
+env = env && env.split("=")[1];
+env = env || ALL_CONFIGS.BETA;
+const CONFIG = env.toUpperCase() || process.env.CONFIG;
+const DEFAULT_CREDS_DIR = "./celsius-app-creds";
 
 if (Object.keys(ALL_CONFIGS).indexOf(CONFIG) !== -1) {
   Object.keys(ENV_FILES).forEach(copyFileFromCelsiusCreds);
