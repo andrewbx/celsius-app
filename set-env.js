@@ -1,7 +1,7 @@
 // copies app.json from celsius-app-creds repo
 const fs = require("fs");
 const path = require("path");
-const args = require("yargs").parse();
+const args = require("./node_modules/yargs").parse();
 
 const { DIRECTORY_PATH } = process.env;
 const CONFIG = args.env.toUpperCase() || process.env.CONFIG;
