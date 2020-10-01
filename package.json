@@ -144,7 +144,6 @@
     "pretty-quick": "^2.0.1",
     "react-dom": "^16.11.0",
     "react-test-renderer": "^16.13.1",
-    "remote-redux-devtools": "^0.5.16",
-    "yargs": "^16.0.3"
+    "remote-redux-devtools": "^0.5.16"
   }
 }
