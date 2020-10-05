@@ -17,8 +17,6 @@ import CelText from "../../atoms/CelText/CelText";
 import CelNumpad from "../../molecules/CelNumpad/CelNumpad";
 import RegularLayout from "../../layouts/RegularLayout/RegularLayout";
 import {
-  BIOMETRIC_TYPES,
-  BIOMETRIC_TEXT,
   BIOMETRIC_ERRORS,
   KEYPAD_PURPOSES,
   MODALS,
@@ -29,7 +27,10 @@ import CelButton from "../../atoms/CelButton/CelButton";
 import ContactSupport from "../../atoms/ContactSupport/ContactSupport";
 import { DEEP_LINKS } from "../../../constants/DATA";
 import LoadingScreen from "../LoadingScreen/LoadingScreen";
-import { createBiometricsSignature } from "../../../utils/biometrics-util";
+import {
+  createBiometricsSignature,
+  getBiometricTypeData,
+} from "../../../utils/biometrics-util";
 import BiometricsAuthenticationModal from "../../modals/BiometricsAuthenticationModal/BiometricsAuthenticationModal";
 import BiometricsNotRecognizedModal from "../../modals/BiometricsNotRecognizedModal/BiometricsNotRecognizedModal";
 import { SCREENS } from "../../../constants/SCREENS";
@@ -71,7 +72,7 @@ class VerifyProfile extends Component {
       verificationError: false,
       showLogOutBtn: false,
       hasSixDigitPin: false,
-      disableBiometrics: false,
+      disableBiometricsForUser: false,
     };
   }
 
@@ -129,9 +130,9 @@ class VerifyProfile extends Component {
     actions.updateFormField("loading", true);
 
     // If biometrics is changed on device, disable biometrics on BE for user
-    if (this.state.disableBiometrics) {
+    if (this.state.disableBiometricsForUser) {
       actions.disableBiometrics();
-      this.setState({ disableBiometrics: false });
+      this.setState({ disableBiometricsForUser: false });
     }
 
     // Check if app is opened from DeepLink
@@ -256,8 +257,7 @@ class VerifyProfile extends Component {
   onPressBiometric = async () => {
     const { actions, navigation, user } = this.props;
     const biometricsEnabled =
-      navigation.getParam("biometrics_enabled") || user.biometrics_enabled; // from 426 or Redux // check this!!!!
-
+      navigation.getParam("biometrics_enabled") || user.biometrics_enabled;
     if (!biometricsEnabled) {
       actions.openModal(MODALS.BIOMETRICS_AUTHENTICATION_MODAL);
     } else {
@@ -273,29 +273,39 @@ class VerifyProfile extends Component {
     const hideBiometrics = navigation.getParam("hideBiometrics");
 
     if (biometricsEnabled && !hideBiometrics) {
-      await createBiometricsSignature(
-        "Verification required",
-        () => {
+      actions.toggleKeypad(false);
+      try {
+        const successfulBiometrics = await createBiometricsSignature(
+          "Verification required"
+        );
+        if (successfulBiometrics) {
           this.setState({
             loading: true,
-            disableBiometrics: false,
+            disableBiometricsForUser: false,
+            value: "******",
           });
           actions.checkBiometrics(this.onCheckSuccess, this.onCheckError);
-        },
-        error => {
-          if (error.message === BIOMETRIC_ERRORS.KEY_PERMANENTLY_INVALIDATED) {
-            actions.openModal(MODALS.BIOMETRICS_NOT_RECOGNIZED_MODAL);
-            this.setState({ disableBiometrics: true });
-          } else if (
-            error.message === BIOMETRIC_ERRORS.TOO_MANY_ATTEMPTS ||
-            error.message === BIOMETRIC_ERRORS.TOO_MANY_ATTEMPTS_SENSOR_DISABLED
-          ) {
-            actions.showMessage("error", error.message);
-          } else {
-            return;
-          }
         }
-      );
+      } catch (error) {
+        if (
+          [
+            BIOMETRIC_ERRORS.TOO_MANY_ATTEMPTS,
+            BIOMETRIC_ERRORS.TOO_MANY_ATTEMPTS_SENSOR_DISABLED,
+          ].includes(error.message)
+        ) {
+          actions.showMessage("error", error.message);
+        } else if (
+          [
+            BIOMETRIC_ERRORS.KEY_NOT_FOUND,
+            BIOMETRIC_ERRORS.AUTHENTICATION_CANCELLED,
+          ].includes(error.message)
+        ) {
+          return;
+        } else {
+          actions.openModal(MODALS.BIOMETRICS_NOT_RECOGNIZED_MODAL);
+          this.setState({ disableBiometricsForUser: true });
+        }
+      }
     }
   };
 
@@ -400,24 +410,11 @@ class VerifyProfile extends Component {
     const { biometrics, navigation, deviceId } = this.props;
     const style = VerifyProfileStyle();
     const hideBiometrics = navigation.getParam("hideBiometrics");
-    let biometricCopy;
 
     if (hideBiometrics || !deviceId) return;
     if (!biometrics || !biometrics.available) return;
 
-    if (biometrics && biometrics.available) {
-      if (biometrics.biometryType === BIOMETRIC_TYPES.FACE_ID) {
-        biometricCopy = {
-          image: require("../../../../assets/images/face-recognition.png"),
-          text: BIOMETRIC_TEXT.FACE_ID,
-        };
-      } else {
-        biometricCopy = {
-          image: require("../../../../assets/images/fingerprint.png"),
-          text: BIOMETRIC_TEXT.TOUCH_ID,
-        };
-      }
-    }
+    const biometricCopy = getBiometricTypeData();
 
     return (
       <TouchableOpacity

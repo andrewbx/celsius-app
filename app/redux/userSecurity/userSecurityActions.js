@@ -8,11 +8,9 @@ import userSecurityService from "../../services/user-security-service";
 import userAuthService from "../../services/user-auth-service";
 import mixpanelAnalytics from "../../utils/mixpanel-analytics";
 import { logoutUser } from "../userAuth/authActions";
-import { setSecureStoreKey } from "../../utils/expo-storage";
-import Constants from "../../../constants";
+import { setSecureStoreKey } from "../../utils/storage-util";
 import { SCREENS } from "../../constants/SCREENS";
-
-const { SECURITY_STORAGE_AUTH_KEY } = Constants;
+import { STORAGE_KEYS } from "../../constants/DATA";
 
 export {
   getTwoFactorSecret,
@@ -70,9 +68,16 @@ function enableTwoFactor(code) {
 function disableTwoFactor() {
   return async (dispatch, getState) => {
     try {
-      const { code } = getState().forms.formData;
+      const formData = getState().forms.formData;
+      const verification = {
+        pin: formData.pin,
+        twoFactorCode: formData.code,
+        payload: formData.payload,
+        signature: formData.signature,
+      };
+
       dispatch(startApiCall(API.DISABLE_TWO_FACTOR));
-      await userSecurityService.disableTwoFactor(code);
+      await userSecurityService.disableTwoFactor(verification);
       dispatch({ type: ACTIONS.DISABLE_TWO_FACTOR_SUCCESS });
       dispatch(navigateTo(SCREENS.SECURITY_SETTINGS));
       dispatch(
@@ -99,6 +104,7 @@ function checkPIN(onSuccess, onError) {
       const { pin } = getState().forms.formData;
 
       dispatch(startApiCall(API.CHECK_PIN));
+      dispatch(toggleKeypad());
 
       await userSecurityService.checkPin(pin);
 
@@ -125,6 +131,7 @@ function checkTwoFactor(onSuccess, onError) {
       const { code } = getState().forms.formData;
 
       dispatch(startApiCall(API.CHECK_TWO_FACTOR));
+      dispatch(toggleKeypad());
 
       await userSecurityService.checkTwoFactor(code);
 
@@ -173,16 +180,15 @@ function changePin(onSuccess) {
     const { formData } = getState().forms;
     const { profile } = getState().user;
 
-    const securityTypeCode = profile.two_factor_enabled
-      ? "twoFactorCode"
-      : "pin";
-    let pinData = {
-      [`${securityTypeCode}`]: profile.two_factor_enabled
-        ? formData.code
-        : formData.pin,
+    const verification = {
+      pin: formData.pin,
+      twoFactorCode: formData.code,
+      payload: formData.payload,
+      signature: formData.signature,
       new_pin: formData.newPin,
       new_pin_confirm: formData.newPinConfirm,
     };
+
     dispatch(toggleKeypad());
 
     if (profile.two_factor_enabled) {
@@ -191,17 +197,13 @@ function changePin(onSuccess) {
           hideBack: true,
           onSuccess: async () => {
             dispatch(updateFormField("loading", true));
-            pinData = {
-              ...pinData,
-              twoFactorCode: getState().forms.formData.code,
-            };
-            await dispatch(completePinChange(pinData, onSuccess));
+            await dispatch(completePinChange(verification, onSuccess));
           },
         })
       );
     } else {
       dispatch(updateFormField("loading", true));
-      dispatch(completePinChange(pinData, onSuccess));
+      dispatch(completePinChange(verification, onSuccess));
     }
   };
 }
@@ -269,7 +271,10 @@ function resetPassword(currentPassword, newPassword) {
         auth0: { id_token: newAuthToken },
       } = data;
 
-      await setSecureStoreKey(SECURITY_STORAGE_AUTH_KEY, newAuthToken);
+      await setSecureStoreKey(
+        STORAGE_KEYS.SECURITY_STORAGE_AUTH_KEY,
+        newAuthToken
+      );
 
       dispatch(showMessage("success", "Password successfully changed."));
       if (securityOverview.fromFixNow) {

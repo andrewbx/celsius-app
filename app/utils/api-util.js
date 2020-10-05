@@ -8,19 +8,14 @@ import CodePush from "react-native-code-push";
 import moment from "moment";
 
 import Constants from "../../constants";
-import { getSecureStoreKey } from "../utils/expo-storage";
+import { getSecureStoreKey } from "./storage-util";
 import store from "../redux/store";
 import * as actions from "../redux/actions";
 import mixpanelAnalytics from "./mixpanel-analytics";
 import { SCREENS } from "../constants/SCREENS";
+import { STORAGE_KEYS } from "../constants/DATA";
 
-const {
-  SECURITY_STORAGE_AUTH_KEY,
-  CLIENT_VERSION,
-  ENV,
-  PUBLIC_KEY,
-  API_URL,
-} = Constants;
+const { CLIENT_VERSION, ENV, PUBLIC_KEY, API_URL } = Constants;
 let token;
 let deviceModel;
 let osVersion;
@@ -93,10 +88,12 @@ async function requestInterceptor(req) {
  * Sets marketing and Device IDs: AFID, IDFA, AAID and device id
  */
 async function setDeviceIds() {
-  let deviceId = store.getState().app.deviceId;
-  let AFID = store.getState().app.appsFlyerUID;
-  let IDFA = Platform.OS === "ios" && store.getState().app.advertisingId;
-  let AAID = Platform.OS === "android" && store.getState().app.advertisingId;
+  let deviceId = await store.getState().app.deviceId;
+  let AFID = await store.getState().app.appsFlyerUID;
+  let IDFA =
+    Platform.OS === "ios" && (await store.getState().app.advertisingId);
+  let AAID =
+    Platform.OS === "android" && (await store.getState().app.advertisingId);
 
   if (!AFID) {
     await store.dispatch(actions.setAppsFlyerUID());
@@ -105,7 +102,7 @@ async function setDeviceIds() {
 
   if (!deviceId) {
     store.dispatch(actions.setDeviceId());
-    deviceId = store.getState().app.deviceId;
+    deviceId = await store.getState().app.deviceId;
   }
 
   if (Platform.OS === "android" && !AAID) {
@@ -197,7 +194,9 @@ async function setAppVersionHeaders() {
  */
 async function setAuthHeaders() {
   try {
-    const storageToken = await getSecureStoreKey(SECURITY_STORAGE_AUTH_KEY);
+    const storageToken = await getSecureStoreKey(
+      STORAGE_KEYS.SECURITY_STORAGE_AUTH_KEY
+    );
     if (token !== storageToken) token = storageToken;
   } catch (err) {
     mixpanelAnalytics.logError("setAuthHeaders", err);
@@ -215,7 +214,7 @@ async function responseInterceptor(res) {
   const sign = res.headers["x-cel-sign"];
   const data = res.data;
 
-  // NOTE: logs API call duration to console
+  // NOTE: logs API call duration to // console
   if (shouldLogDurations) {
     durations[res.config.url] = moment().diff(
       durations[res.config.url],
@@ -463,7 +462,7 @@ function parseValidationErrors(serverError) {
  * Checks if some endpoints were successful in history
  *
  * @param {Array} callNames - array of calls from API
- * @params {Number} numberOfCallsInHistory - number of calls to look into history
+ * @param {Number} numberOfCallsInHistory - number of calls to look into history
  * @return {Boolean}
  */
 function wereSuccessfulInHistory(callNames, numberOfCallsInHistory = 5) {

@@ -45,9 +45,9 @@ class LoanRequestDetails extends Component {
 
   componentDidMount = async () => {
     const { navigation, actions } = this.props;
-    const loanId = navigation.getParam("id");
-    actions.setActiveLoan(loanId);
-    await actions.getLoanById(loanId);
+    const id = navigation.getParam("id");
+    actions.setActiveLoan(id);
+    await actions.getLoanById(id);
   };
 
   componentDidUpdate(prevProps) {
@@ -167,36 +167,28 @@ class LoanRequestDetails extends Component {
         );
       case "marginCall":
         return (
-          activeLoan.margin_call && (
-            <TxCardSection
-              key={sectionType}
-              title={`${activeLoan.coin} Margin Call At:`}
-              amount={activeLoan.margin_call_price}
-              cardText={`If ${activeLoan.coin} drops below ${formatter.fiat(
-                activeLoan.margin_call_price,
-                "USD"
-              )} you will get a notification asking for additional collateral.`}
-            />
-          )
+          <TxCardSection
+            key={sectionType}
+            title={`${activeLoan.coin} Margin Call At:`}
+            amount={activeLoan.margin_call_price}
+            cardText={`If ${activeLoan.coin} drops below ${formatter.fiat(
+              activeLoan.margin_call_price,
+              "USD"
+            )} you will get a notification asking for additional collateral.`}
+          />
         );
       case "liquidation":
         return (
-          activeLoan.margin_call && (
-            <TxCardSection
-              key={sectionType}
-              title={"Liquidation At:"}
-              amount={activeLoan.liquidation_call_price}
-              cardText={`If ${activeLoan.coin} drops below ${formatter.fiat(
-                activeLoan.liquidation_call_price,
-                "USD"
-              )} we will sell some of your collateral to cover the margin.`}
-            />
-          )
+          <TxCardSection
+            key={sectionType}
+            title={"Liquidation At:"}
+            amount={activeLoan.liquidation_call_price}
+            cardText={`If ${activeLoan.coin} drops below ${formatter.fiat(
+              activeLoan.liquidation_call_price,
+              "USD"
+            )} we will sell some of your collateral to cover the margin.`}
+          />
         );
-      // case "firstInterest":
-      //   return  <TxBasicSection key={sectionType} label={"First Interest Payment Due"} value={moment(transaction.loan_data.first_interest).format("D MMM YYYY")}/>;
-      // case "nextInterest":
-      //   return  <TxBasicSection key={sectionType} label={"Next Interest Payment Due"} value={moment(transaction.loan_data.next_interest).format("D MMM YYYY")}/>;
       case "maturity":
         return (
           <TxBasicSection
@@ -225,7 +217,6 @@ class LoanRequestDetails extends Component {
           });
 
     const sections = activeLoan.uiSections;
-
     return (
       <RegularLayout>
         <View style={style.container}>

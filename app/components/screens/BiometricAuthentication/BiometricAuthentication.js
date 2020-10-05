@@ -10,16 +10,18 @@ import CelSwitch from "../../atoms/CelSwitch/CelSwitch";
 import { getColor } from "../../../utils/styles-util";
 import { COLOR_KEYS } from "../../../constants/COLORS";
 import CelText from "../../atoms/CelText/CelText";
-import { BIOMETRIC_TEXT, BIOMETRIC_TYPES } from "../../../constants/UI";
+import { BIOMETRIC_ERRORS, MODALS } from "../../../constants/UI";
 import {
   biometricNonEnrolled,
   createBiometricsKey,
   deleteBiometricsKey,
+  getBiometricTypeData,
 } from "../../../utils/biometrics-util";
 import { SCREENS } from "../../../constants/SCREENS";
 import InfoBox from "../../atoms/InfoBox/InfoBox";
 import Icon from "../../atoms/Icon/Icon";
 import mixpanelAnalytics from "../../../utils/mixpanel-analytics";
+import BiometricsActivateFingerprintModal from "../../modals/BiometricsActivateFingerprintModal/BiometricsActivateFingerprintModal";
 
 @connect(
   state => ({
@@ -46,24 +48,6 @@ class BiometricAuthentication extends Component {
     actions.getProfileInfo();
   }
 
-  getBiometricsTextAndIcon = () => {
-    const { biometrics } = this.props;
-    const biometricsType = {
-      text: "Biometric authentication",
-      icon: "Fingerprint",
-    };
-
-    if (biometrics && biometrics.biometryType === BIOMETRIC_TYPES.FACE_ID) {
-      biometricsType.icon = "FaceRecognition";
-      biometricsType.text = BIOMETRIC_TEXT.FACE_ID;
-    }
-    if (biometrics && biometrics.biometryType === BIOMETRIC_TYPES.TOUCH_ID) {
-      biometricsType.icon = "Fingerprint";
-      biometricsType.text = BIOMETRIC_TEXT.TOUCH_ID;
-    }
-    return biometricsType;
-  };
-
   rightSwitch = () => {
     const { user } = this.props;
     return (
@@ -76,7 +60,7 @@ class BiometricAuthentication extends Component {
 
   handleSwitchChangeBiometrics = () => {
     const { actions, biometrics, user } = this.props;
-    const biometricsType = this.getBiometricsTextAndIcon();
+    const biometricsType = getBiometricTypeData();
     const enableBiometricsText = `${biometricsType.text} enabled on this device.`;
     const disableBiometricsText = `${biometricsType.text} disabled on this device.`;
 
@@ -84,12 +68,21 @@ class BiometricAuthentication extends Component {
       actions.navigateTo(SCREENS.VERIFY_PROFILE, {
         onSuccess: async () => {
           try {
-            await createBiometricsKey(publicKey => {
-              actions.activateBiometrics(publicKey, biometrics.biometryType);
-            });
-            actions.resetToScreen(SCREENS.BIOMETRICS_AUTHENTICATION);
+            const publicKey = await createBiometricsKey();
+            await actions.activateBiometrics(
+              publicKey,
+              biometrics.biometryType
+            );
             actions.showMessage("success", enableBiometricsText);
+            actions.resetToScreen(SCREENS.BIOMETRICS_AUTHENTICATION);
           } catch (e) {
+            actions.resetToScreen(SCREENS.BIOMETRICS_AUTHENTICATION);
+            if (
+              e &&
+              e.message === BIOMETRIC_ERRORS.ERROR_GENERATING_PUBLIC_KEYS
+            ) {
+              actions.openModal(MODALS.BIOMETRICS_ACTIVATE_FINGERPRINT_MODAL);
+            }
             mixpanelAnalytics.logError(
               "handleSwitchChangeBiometrics - enable",
               e
@@ -120,17 +113,15 @@ class BiometricAuthentication extends Component {
   };
 
   render() {
-    const { biometrics, user } = this.props;
+    const { biometrics, actions } = this.props;
     const noBiometricsEnrolled = biometricNonEnrolled();
 
     const Switcher = this.rightSwitch;
-    const biometricsType = this.getBiometricsTextAndIcon();
-    const enableOrDisable = user.biometrics_enabled ? "Disable" : "Enable";
+    const biometricsType = getBiometricTypeData();
     return (
       <RegularLayout>
         <CelText type="H4">
-          {enableOrDisable} Biometric authentication which is available on this
-          device.
+          Enable Biometric authentication which is available on this device.
         </CelText>
         {biometrics.available && (
           <IconButton
@@ -179,6 +170,7 @@ class BiometricAuthentication extends Component {
             </CelText>
           }
         </CelText>
+        <BiometricsActivateFingerprintModal actions={actions} />
       </RegularLayout>
     );
   }

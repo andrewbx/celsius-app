@@ -89,6 +89,7 @@ class SecurityFixNow extends Component {
           actions.fromFixNow();
           actions.navigateTo(SCREENS.TWO_FACTOR_SETTINGS);
         },
+        hideBiometrics: true,
       });
     }
   };
@@ -182,6 +183,7 @@ class SecurityFixNow extends Component {
                     actions.navigateTo(content.navigateToScreen);
                     actions.fromFixNow();
                   },
+                  hideBiometrics: true,
                 });
               }}
             />

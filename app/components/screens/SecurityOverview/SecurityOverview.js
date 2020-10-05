@@ -58,6 +58,7 @@ class SecurityOverview extends Component {
     if (!twoFAStatus.isActive) {
       actions.navigateTo(SCREENS.VERIFY_PROFILE, {
         onSuccess: () => actions.navigateTo(SCREENS.TWO_FACTOR_SETTINGS),
+        hideBiometrics: true,
       });
     }
   };
@@ -196,7 +197,9 @@ class SecurityOverview extends Component {
                 enhanceText={
                   securityOverview.score_parameters.find(
                     e => e.name === "password" && e.fixable
-                  ) && "Change Password"
+                  )
+                    ? "Change Password"
+                    : null
                 }
                 onPressEnhance={() => {
                   actions.navigateTo(SCREENS.CHANGE_PASSWORD);
@@ -216,11 +219,14 @@ class SecurityOverview extends Component {
                 enhanceText={
                   securityOverview.score_parameters.find(
                     e => e.name === "pin" && e.fixable
-                  ) && "Change PIN"
+                  )
+                    ? "Change PIN"
+                    : null
                 }
                 onPressEnhance={() => {
                   actions.navigateTo(SCREENS.VERIFY_PROFILE, {
                     onSuccess: () => actions.navigateTo(SCREENS.CHANGE_PIN),
+                    hideBiometrics: true,
                   });
                 }}
               />

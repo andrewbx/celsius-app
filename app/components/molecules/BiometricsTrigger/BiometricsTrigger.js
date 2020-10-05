@@ -4,8 +4,9 @@ import PropTypes from "prop-types";
 import Banner from "../Banner/Banner";
 import { getColor } from "../../../utils/styles-util";
 import { COLOR_KEYS } from "../../../constants/COLORS";
-import { DONT_SHOW_AGAIN } from "../../../constants/UI";
-import { setSecureStoreKey } from "../../../utils/expo-storage";
+import { setSecureStoreKey } from "../../../utils/storage-util";
+import { STORAGE_KEYS } from "../../../constants/DATA";
+import { SCREENS } from "../../../constants/SCREENS";
 
 class BiometricsTrigger extends Component {
   static propTypes = {
@@ -21,14 +22,15 @@ class BiometricsTrigger extends Component {
 
   render() {
     const { actions } = this.props;
-    const content = `Access to your account is much easier now! Celsius alows you to  use Touch or Face ID instead of other authentication methods.`;
+    const content = `Access to your account is much easier now! Celsius allows you to use Touch or Face ID instead of other authentication methods.`;
     return (
       <Banner
         backgroundColor={getColor(COLOR_KEYS.LINK)}
         image={require("../../../../assets/images/biometrics.png")}
+        imageStyle={{ width: 55, height: 55, marginLeft: 5 }}
         buttonText={"Enable biometrics"}
         action={() => {
-          actions.navigateTo("BiometricAuthentication");
+          actions.navigateTo(SCREENS.BIOMETRICS_AUTHENTICATION);
         }}
         title={"Fast & Secure Authentication"}
         content={content}
@@ -36,7 +38,7 @@ class BiometricsTrigger extends Component {
         textButtonAction={() => {
           actions.closeBanner();
           setSecureStoreKey(
-            DONT_SHOW_AGAIN.BIOMETRIC_BANNER,
+            STORAGE_KEYS.BIOMETRIC_BANNER,
             JSON.stringify(true)
           );
         }}

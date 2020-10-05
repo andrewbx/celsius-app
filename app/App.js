@@ -17,12 +17,13 @@ import apiUtil from "./utils/api-util";
 import appUtil from "./utils/app-util";
 import branchUtil from "./utils/branch-util";
 import { disableAccessibilityFontScaling } from "./utils/styles-util";
-import { getSecureStoreKey } from "./utils/expo-storage";
+import { getSecureStoreKey } from "./utils/storage-util";
 import Constants from "../constants";
 import StoryBook from "./components/screens/Storybook/Storybook";
 import { SCREENS } from "./constants/SCREENS";
+import { STORAGE_KEYS } from "./constants/DATA";
 
-const { SECURITY_STORAGE_AUTH_KEY, STORYBOOK } = Constants;
+const { STORYBOOK } = Constants;
 
 // eslint-disable-next-line no-console
 console.disableYellowBox = true;
@@ -82,7 +83,9 @@ class App extends Component {
     const updateInProgress = await appUtil.updateCelsiusApp();
     if (updateInProgress) return;
 
-    const token = await getSecureStoreKey(SECURITY_STORAGE_AUTH_KEY);
+    const token = await getSecureStoreKey(
+      STORAGE_KEYS.SECURITY_STORAGE_AUTH_KEY
+    );
     if (!token) {
       return store.dispatch(actions.navigateTo(SCREENS.WELCOME));
     }
